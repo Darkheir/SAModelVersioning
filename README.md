@@ -34,6 +34,7 @@ echo $book->version; // 3
 * Yii 1.1 or above
 * PHP 5.3
 * a Mysql database
+* A primary key named `id` in the model table (may change in the next version if some people need the ability to customize it)
 
 ##Installation
 
@@ -61,16 +62,16 @@ To create it you can run the following sql line:
 
  This table will have all the field of the base model table plus a few:
 
- * `version` that wwill store the version number of the datas stored. This 
+ * `version` that will store the version number of the datas stored.
  * `version_comment` that can store a comment for this version
  * `created_by` that can store the id of the person who saved this version for example
  * `created_time` that will store at what time this version has been created
 
-If in your model one of the field already has one of the names listed above, you'll be able to change thos field by specifying it when declaring the behavior (see below).
+If in your model one of the field already has one of the names listed above, you'll be able to change the name ofthose fields by specifying it when declaring the behavior (see below).
 
 Another thing to do is create a primary key that'll be defined by id AND version
 
-So let's say we have created the following table model:
+So let's say we have the following table model:
 
 ```sql
 CREATE TABLE `news` (
