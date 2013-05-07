@@ -73,7 +73,7 @@ Another thing to do is create a primary key that'll be defined by id AND version
 
 So let's say we have the following table model:
 
-```sql
+```mysql
 CREATE TABLE `news` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `title` varchar(255) NOT NULL,
@@ -85,7 +85,7 @@ CREATE TABLE `news` (
 
 Then you'll have to create the following table:
 
-```sql
+```mysql
 CREATE TABLE `news_version` (
   `id` int(11) NOT NULL,
   `version` int(11) NOT NULL AUTO_INCREMENT,
@@ -96,7 +96,7 @@ CREATE TABLE `news_version` (
   `created_by` varchar(255) NOT NULL,
   `created_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`, `version`)
-);
+) ENGINE=MyISAM;
 ```
 **/!\ It's important to define the primary key starting with `id` and then `version`**
 
