@@ -241,6 +241,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 	
 	/**
 	* Convert the model to the given version
+    * Attention: This action may destroy any dataintegrity of the model as the attributes will be changed to the state of the old version.
 	* @param int $versionNumber The version to convert to
 	* @return bool true if everything went fine, false otherwise
 	*/
@@ -258,6 +259,18 @@ class SAModelVersioning extends CActiveRecordBehavior
 		    	)
 			    ->queryRow();
 	    if($versionArray) {
+            /**
+             * We need to save the version conversion directly into the database,
+             * if not it is nothing else then getOneVersion.
+             * If we require the user to save the model via $model->save() it will just create a new
+             * version on top. (therefore destroying any sense into a "toVersion" method.
+             */
+            $dbArray = $this->unsetVersionedAttributes($versionArray);
+            unset($dbArray['id']);
+            $dbArray[$this->versionField] = $versionNumber;
+            Yii::app()->db->createCommand()->update($this->getOwner()->tableName(),
+                $dbArray, 'id=:id', array(':id' => $this->getOwner()->id)
+            );
 	    	$this->populateActiveRecord($versionArray, $this->getOwner());
 	    	return true;
 	    } else {
