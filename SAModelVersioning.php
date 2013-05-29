@@ -33,7 +33,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 			$this->versionField => $version,
 			), 'id=:id', array(':id' => $this->getOwner()->id)
 		);
-		$this->getOwner()->version = $version;
+		$this->getOwner()->{$this->versionField} = $version;
 		$this->_lastVersion = $version;
 	}
 
@@ -102,7 +102,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 	*/
 	public function isLastVersion() 
 	{
-		return $this->getOwner()->version === $this->getLastVersionNumber();
+		return $this->getOwner()->{$this->versionField} === $this->getLastVersionNumber();
 	}
 	
 	/**
@@ -110,10 +110,10 @@ class SAModelVersioning extends CActiveRecordBehavior
 	*/
 	public function getVersion() 
 	{
-		if ($this->getOwner()->version == null) {
+		if ($this->getOwner()->{$this->versionField} == null) {
 			return 0;
 		} else {
-			return $this->getOwner()->version;
+			return $this->getOwner()->{$this->versionField};
 		}
 	}
 	
@@ -164,7 +164,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->select('*')
 			    ->from($this->versionTable)
 			    ->where('id=:id', array(':id'=>$this->getOwner()->primaryKey))
-			    ->order('version ASC')
+			    ->order($this->versionField.' ASC')
 			    ->queryAll();
 	    if(!empty($allVersionsArray)) {
 	    	return $this->populateActiveRecords($allVersionsArray);	
@@ -185,9 +185,9 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->select('*')
 			    ->from($this->versionTable)
 			    ->where('id=:id', array(':id'=>$this->getOwner()->primaryKey))
-			    ->order('version DESC')
+                ->order($this->versionField.' DESC')
 			    ->limit($number)
-			    ->queryAll();
+                ->queryAll();
 	    if(!empty($lastVersionsArray)) {
 	    	return $this->populateActiveRecords($lastVersionsArray);
 	    } else {
@@ -207,7 +207,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->select('*')
 			    ->from($this->versionTable)
 			    ->where(
-			    	"id=:id AND $this->versionField=:version", 
+			    	"id=:id AND $this->versionField=:version",
 			    	array(
 			    		':id'=>$this->getOwner()->primaryKey, 
 			    		':version'=>$versionNumber,
@@ -233,7 +233,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->select('*')
 			    ->from($this->versionTable)
 			    ->where(
-			    	"id=:id AND $this->versionField=:version", 
+			    	"id=:id AND $this->versionField=:version",
 			    	array(
 			    		':id'=>$this->getOwner()->primaryKey, 
 			    		':version'=>$versionNumber,
@@ -260,18 +260,18 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->select('*')
 			    ->from($this->versionTable)
 			    ->where(
-					array('and', 'id=:id', array('or', $this->versionField . '=:version1', $this->versionField . '=:version2')),
+					array('and', 'id=:id', array('or', $this->versionField.' =:version1',$this->versionField.' =:version2')),
 					array(
 						':id'=>$this->getOwner()->primaryKey,
 						':version1' => $version1,
 						':version2' => $version2,
 					)
 				)
-			    ->order("$this->versionField ASC")
+			    ->order($this->versionField." ASC")
 			    ->queryAll();
 	    if(!empty($versionsArray)&& count($versionsArray) == 2) {
 			//Watch attributes changing from one version to the other and put them in the array
-			//penser à unset les attributs de version (version, comment, created by, created at)
+			//penser ï¿½ unset les attributs de version (version, comment, created by, created at)
 			$differences = array();
 			foreach($versionsArray[0] as $index => $value) {
 				if(isset($versionsArray[1][$index]) && $value !== $versionsArray[1][$index]) {
@@ -298,7 +298,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->select('*')
 			    ->from($this->versionTable)
 			    ->where(
-			    	"id=:id AND $this->versionField=:version", 
+			    	"id=:id AND $this->versionField=:version",
 			    	array(
 			    		':id'=>$this->getOwner()->primaryKey, 
 			    		':version'=>$versionNumber,
