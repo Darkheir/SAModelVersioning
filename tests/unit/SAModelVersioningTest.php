@@ -328,16 +328,18 @@ class SAModelVersioningTest extends CDbTestCase
         $comment_id = $comment->getPrimaryKey();
 
         //Trying to get the versionCreatedBy via SAModelVersioining functionality
-        $article = array_pop($article->getLastVersions());
-        $comment = array_pop($comment->getLastVersions());
-        $this->assertTrue($article->getVersionCreatedBy() === "TestUser","Getting VersionCreatedBy Attribute");
-        $this->assertTrue($comment->getVersionCreatedBy() === "TestUser","Getting VersionCreatedBy Attribute on custom table");
+        $article = $article->getLastVersions();
+        $article = end($article);
+        $comment = $comment->getLastVersions();
+        $comment = end($comment);
+        $this->assertEquals("TestUser",$article->getVersionCreatedBy(),"Getting VersionCreatedBy Attribute");
+        $this->assertEquals("TestUser",$comment->getVersionCreatedBy(),"Getting VersionCreatedBy Attribute on custom table");
 
         //Trying to get the versionCreatedBy via normal active record operations
         $article = Article::model()->findByPk($article_id);
         $comment = Article::model()->findByPk($comment_id);
-        $this->assertTrue($article->getVersionCreatedBy() === "TestUser","Getting VersionCreatedBy Attribute");
-        $this->assertTrue($comment->getVersionCreatedBy() === "TestUser","Getting VersionCreatedBy Attribute on custom table");
+        $this->assertEquals("TestUser",$article->getVersionCreatedBy(),"Getting VersionCreatedBy Attribute");
+        $this->assertEquals("TestUser",$comment->getVersionCreatedBy(),"Getting VersionCreatedBy Attribute on custom table");
     }
 
     public function testSetVersionComment() {
@@ -369,16 +371,18 @@ class SAModelVersioningTest extends CDbTestCase
         $comment_id = $comment->getPrimaryKey();
 
         //Trying to get the getVersionComment via SAModelVersioning functionality
-        $article = array_pop($article->getLastVersions());
-        $comment = array_pop($comment->getLastVersions());
-        $this->assertTrue($article->getVersionComment() === "TestComment","Getting getVersionComment Attribute");
-        $this->assertTrue($comment->getVersionComment() === "TestComment","Getting getVersionComment Attribute on custom table");
+        $article = $article->getLastVersions();
+        $article = end($article);
+        $comment = $comment->getLastVersions();
+        $comment = end($comment);
+        $this->assertEquals("TestComment",$article->getVersionComment(),"Getting getVersionComment Attribute");
+        $this->assertEquals("TestComment",$comment->getVersionComment(),"Getting getVersionComment Attribute on custom table");
 
         //Trying to get the getVersionComment via normal active record operations
         $article = Article::model()->findByPk($article_id);
         $comment = Article::model()->findByPk($comment_id);
-        $this->assertTrue($article->getVersionComment() === "TestComment","Getting getVersionComment Attribute");
-        $this->assertTrue($comment->getVersionComment() === "TestComment","Getting getVersionComment Attribute on custom table");
+        $this->assertEquals("TestComment",$article->getVersionComment(),"Getting getVersionComment Attribute");
+        $this->assertEquals("TestComment",$comment->getVersionComment(),"Getting getVersionComment Attribute on custom table");
     }
 
     public function testGetVersionCreatedAt() {
@@ -386,14 +390,16 @@ class SAModelVersioningTest extends CDbTestCase
         $comment = Article::model()->findByPk(1);
 
         //Trying to get the getVersionCreatedAt via normal active record operations
-        $this->assertTrue($article->getVersionCreatedAt() === "2013-05-28 12:55:24","Getting getVersionCreatedAt Attribute");
-        $this->assertTrue($comment->getVersionCreatedAt() === "2013-05-28 12:55:24","Getting getVersionCreatedAt Attribute on custom table");
+        $this->assertEquals("2013-05-28 12:55:24",$article->getVersionCreatedAt(),"Getting getVersionCreatedAt Attribute");
+        $this->assertEquals("2013-05-28 12:55:24",$comment->getVersionCreatedAt(),"Getting getVersionCreatedAt Attribute on custom table");
 
         //Trying to get the getVersionCreatedAt via SAModelVersioning functionality
-        $article = array_pop($article->getLastVersions());
-        $comment = array_pop($comment->getLastVersions());
-        $this->assertTrue($article->getVersionCreatedAt() === "2013-05-28 12:55:24","Getting getVersionCreatedAt Attribute");
-        $this->assertTrue($comment->getVersionCreatedAt() === "2013-05-28 12:55:24","Getting getVersionCreatedAt Attribute on custom table");
+        $article = $article->getLastVersions();
+        $article = end($article);
+        $comment = $comment->getLastVersions();
+        $comment = end($comment);
+        $this->assertEquals("2013-05-28 12:55:24",$article->getVersionCreatedAt(),"Getting getVersionCreatedAt Attribute");
+        $this->assertEquals("2013-05-28 12:55:24",$comment->getVersionCreatedAt(),"Getting getVersionCreatedAt Attribute on custom table");
     }
 
     public function testSetVersionCreatedAt() {
@@ -435,13 +441,13 @@ class SAModelVersioningTest extends CDbTestCase
         $commentLastVersion = Article::model()->findByPk(1);
         $commentPreviousVersion = Article::model()->findByPk(2);
 
-        $this->assertTrue($articleNewVersion->getVersion() === 0,"New Article is version 0");
-        $this->assertTrue($articleLastVersion->getVersion() === 3,"Article 1 is version 3");
-        $this->assertTrue($articlePreviousVersion->getVersion() === 1,"Article 2 is version 1");
+        $this->assertEquals(0,$articleNewVersion->getVersion() ,"New Article is version 0");
+        $this->assertEquals(3,$articleLastVersion->getVersion() ,"Article 1 is version 3");
+        $this->assertEquals(1,$articlePreviousVersion->getVersion() ,"Article 2 is version 1");
 
-        $this->assertTrue($commentNewVersion->getVersion() === 0,"New Comment is version 0");
-        $this->assertTrue($commentLastVersion->getVersion() === 3,"Comment 1 is version 3");
-        $this->assertTrue($commentPreviousVersion->getVersion() === 1,"Comment 2 is version 1");
+        $this->assertEquals(0,$commentNewVersion->getVersion() ,"New Comment is version 0");
+        $this->assertEquals(3,$commentLastVersion->getVersion() ,"Comment 1 is version 3");
+        $this->assertEquals(1,$commentPreviousVersion->getVersion() ,"Comment 2 is version 1");
     }
 
     public function testGetLastVersionNumber() {
@@ -452,13 +458,13 @@ class SAModelVersioningTest extends CDbTestCase
         $commentLastVersion = Article::model()->findByPk(1);
         $commentPreviousVersion = Article::model()->findByPk(2);
 
-        $this->assertTrue($articleNewVersion->getLastVersionNumber() === 0,"New Article has last version 0");
-        $this->assertTrue($articleLastVersion->getLastVersionNumber() === 3,"Article 1 has last version 3");
-        $this->assertTrue($articlePreviousVersion->getLastVersionNumber() === 2,"Article 2 has last version 1");
+        $this->assertEquals(0, $articleNewVersion->getLastVersionNumber(),"New Article has last version 0");
+        $this->assertEquals(3, $articleLastVersion->getLastVersionNumber(),"Article 1 has last version 3");
+        $this->assertEquals(2, $articlePreviousVersion->getLastVersionNumber(),"Article 2 has last version 1");
 
-        $this->assertTrue($commentNewVersion->getLastVersionNumber() === 0,"New Comment has last version 0");
-        $this->assertTrue($commentLastVersion->getLastVersionNumber() === 3,"Comment 1 has last version 3");
-        $this->assertTrue($commentPreviousVersion->getLastVersionNumber() === 2,"Comment 2 has last version 1");
+        $this->assertEquals(0, $commentNewVersion->getLastVersionNumber(),"New Comment has last version 0");
+        $this->assertEquals(3, $commentLastVersion->getLastVersionNumber(),"Comment 1 has last version 3");
+        $this->assertEquals(2, $commentPreviousVersion->getLastVersionNumber(),"Comment 2 has last version 1");
     }
 
     public function testDeleteVersioning() {
@@ -490,13 +496,13 @@ class SAModelVersioningTest extends CDbTestCase
             ->queryAll();
         $this->assertEmpty($versionEntries,"All comment versions deleted");
 
-        $this->assertTrue($articleNewVersion->getVersion() === 0,"New Article is version 0");
-        $this->assertTrue($articleLastVersion->getVersion() === 3,"Article 1 is version 3");
-        $this->assertTrue($articlePreviousVersion->getVersion() === 1,"Article 2 is version 1");
+        $this->assertEquals(0, $articleNewVersion->getVersion() ,"New Article is version 0");
+        $this->assertEquals(3, $articleLastVersion->getVersion() ,"Article 1 is version 3");
+        $this->assertEquals(1, $articlePreviousVersion->getVersion() ,"Article 2 is version 1");
 
-        $this->assertTrue($commentNewVersion->getVersion() === 0,"New Comment is version 0");
-        $this->assertTrue($commentLastVersion->getVersion() === 3,"Comment 1 is version 3");
-        $this->assertTrue($commentPreviousVersion->getVersion() === 1,"Comment 2 is version 1");
+        $this->assertEquals(0, $commentNewVersion->getVersion() ,"New Comment is version 0");
+        $this->assertEquals(3, $commentLastVersion->getVersion() ,"Comment 1 is version 3");
+        $this->assertEquals(1, $commentPreviousVersion->getVersion() ,"Comment 2 is version 1");
 
         //Check impacts after loading
         $articleNewVersion = new Article();
@@ -506,13 +512,13 @@ class SAModelVersioningTest extends CDbTestCase
         $commentLastVersion = Article::model()->findByPk(1);
         $commentPreviousVersion = Article::model()->findByPk(2);
 
-        $this->assertTrue($articleNewVersion->getVersion() === 0,"New Article is version 0");
-        $this->assertTrue($articleLastVersion->getVersion() === 3,"Article 1 is version 3");
-        $this->assertTrue($articlePreviousVersion->getVersion() === 1,"Article 2 is version 1");
+        $this->assertEquals(0, $articleNewVersion->getVersion() ,"New Article is version 0");
+        $this->assertEquals(3, $articleLastVersion->getVersion() ,"Article 1 is version 3");
+        $this->assertEquals(1, $articlePreviousVersion->getVersion() ,"Article 2 is version 1");
 
-        $this->assertTrue($commentNewVersion->getVersion() === 0,"New Comment is version 0");
-        $this->assertTrue($commentLastVersion->getVersion() === 3,"Comment 1 is version 3");
-        $this->assertTrue($commentPreviousVersion->getVersion() === 1,"Comment 2 is version 1");
+        $this->assertEquals(0, $commentNewVersion->getVersion() ,"New Comment is version 0");
+        $this->assertEquals(3, $commentLastVersion->getVersion() ,"Comment 1 is version 3");
+        $this->assertEquals(1, $commentPreviousVersion->getVersion() ,"Comment 2 is version 1");
     }
 
     public function testDeleteVersioningUpdateVersioning() {
@@ -544,13 +550,13 @@ class SAModelVersioningTest extends CDbTestCase
             ->queryAll();
         $this->assertEmpty($versionEntries,"All comment versions deleted");
 
-        $this->assertTrue($articleNewVersion->getVersion() === 0,"New Article is version 0");
-        $this->assertTrue($articleLastVersion->getVersion() === 0,"Article 1 is version 0");
-        $this->assertTrue($articlePreviousVersion->getVersion() === 0,"Article 2 is version 0");
+        $this->assertEquals(0, $articleNewVersion->getVersion() ,"New Article is version 0");
+        $this->assertEquals(0, $articleLastVersion->getVersion() ,"Article 1 is version 0");
+        $this->assertEquals(0, $articlePreviousVersion->getVersion() ,"Article 2 is version 0");
 
-        $this->assertTrue($commentNewVersion->getVersion() === 0,"New Comment is version 0");
-        $this->assertTrue($commentLastVersion->getVersion() === 0,"Comment 1 is version 0");
-        $this->assertTrue($commentPreviousVersion->getVersion() === 0,"Comment 2 is version 0");
+        $this->assertEquals(0, $commentNewVersion->getVersion() ,"New Comment is version 0");
+        $this->assertEquals(0, $commentLastVersion->getVersion() ,"Comment 1 is version 0");
+        $this->assertEquals(0, $commentPreviousVersion->getVersion() ,"Comment 2 is version 0");
 
         //Check impacts after loading
         $articleNewVersion = new Article();
@@ -560,13 +566,13 @@ class SAModelVersioningTest extends CDbTestCase
         $commentLastVersion = Article::model()->findByPk(1);
         $commentPreviousVersion = Article::model()->findByPk(2);
 
-        $this->assertTrue($articleNewVersion->getVersion() === 0,"New Article is version 0");
-        $this->assertTrue($articleLastVersion->getVersion() === 0,"Article 1 is version 0");
-        $this->assertTrue($articlePreviousVersion->getVersion() === 0,"Article 2 is version 0");
+        $this->assertEquals(0, $articleNewVersion->getVersion() ,"New Article is version 0");
+        $this->assertEquals(0, $articleLastVersion->getVersion() ,"Article 1 is version 0");
+        $this->assertEquals(0, $articlePreviousVersion->getVersion() ,"Article 2 is version 0");
 
-        $this->assertTrue($commentNewVersion->getVersion() === 0,"New Comment is version 0");
-        $this->assertTrue($commentLastVersion->getVersion() === 0,"Comment 1 is version 0");
-        $this->assertTrue($commentPreviousVersion->getVersion() === 0,"Comment 2 is version 0");
+        $this->assertEquals(0, $commentNewVersion->getVersion() ,"New Comment is version 0");
+        $this->assertEquals(0, $commentLastVersion->getVersion() ,"Comment 1 is version 0");
+        $this->assertEquals(0, $commentPreviousVersion->getVersion() ,"Comment 2 is version 0");
     }
 
     public function testGetAllVersions() {
@@ -627,31 +633,31 @@ class SAModelVersioningTest extends CDbTestCase
 
         $lastVersions = $articleLastVersion->getLastVersions();
         $this->assertTrue(is_array($lastVersions) && count($lastVersions) == 1);
-        $this->assertInstanceOf($lastVersions[0],'Article');
+        $this->assertInstanceOf('Article',$lastVersions[0]);
         $lastVersions = $commentLastVersion->getLastVersions();
         $this->assertTrue(is_array($lastVersions) && count($lastVersions) == 1);
-        $this->assertInstanceOf($lastVersions[0],'Comment');
+        $this->assertInstanceOf('Comment',$lastVersions[0]);
 
         $lastVersions = $articleLastVersion->getLastVersions(2);
         $this->assertTrue(is_array($lastVersions) && count($lastVersions) == 2);
-        $this->assertInstanceOf($lastVersions[0],'Article');
-        $this->assertInstanceOf($lastVersions[1],'Article');
+        $this->assertInstanceOf('Article',$lastVersions[0]);
+        $this->assertInstanceOf('Article',$lastVersions[1]);
         $this->assertEquals(1,$lastVersions[1]->id);
         $this->assertFalse($lastVersions[1]->isNewRecord);
         $lastVersions = $commentLastVersion->getLastVersions(2);
         $this->assertTrue(is_array($lastVersions) && count($lastVersions) == 2);
-        $this->assertInstanceOf($lastVersions[0],'Comment');
-        $this->assertInstanceOf($lastVersions[1],'Comment');
+        $this->assertInstanceOf('Comment',$lastVersions[0]);
+        $this->assertInstanceOf('Comment',$lastVersions[1]);
         $this->assertEquals("Review and Approval", $lastVersions[1]->getVersionComment());
         $this->assertEquals("Admin", $lastVersions[1]->getVersionCreatedBy());
         $this->assertEquals("2013-05-28 12:55:23", $lastVersions[1]->getVersionCreatedAt());
 
         $lastVersions = $articleLastVersion->getLastVersions(10);
         $this->assertTrue(is_array($lastVersions) && count($lastVersions) == 3);
-        $this->assertInstanceOf($lastVersions[2],'Article');
+        $this->assertInstanceOf('Article',$lastVersions[2]);
         $lastVersions = $commentLastVersion->getLastVersions(10);
         $this->assertTrue(is_array($lastVersions) && count($lastVersions) == 3);
-        $this->assertInstanceOf($lastVersions[2],'Comment');
+        $this->assertInstanceOf('Comment',$lastVersions[2]);
     }
 
     public function testGetOneVersion() {
@@ -666,8 +672,8 @@ class SAModelVersioningTest extends CDbTestCase
         $article = $articleLastVersion->getOneVersion(3);
         $comment = $commentLastVersion->getOneVersion(2);
 
-        $this->assertInstanceOf($article,'Article');
-        $this->assertInstanceOf($comment,'Comment');
+        $this->assertInstanceOf('Article',$article);
+        $this->assertInstanceOf('Comment',$comment);
 
         $this->assertEquals("Review and Approval", $comment->getVersionComment());
         $this->assertEquals("Admin", $comment->getVersionCreatedBy());
@@ -693,7 +699,7 @@ class SAModelVersioningTest extends CDbTestCase
         $this->assertEquals("Admin", $comment->getVersionCreatedBy());
         $this->assertEquals("2013-05-28 12:55:23", $comment->getVersionCreatedAt());
 
-        $this->assertEquals("Corrected Content", $article->content);
+        $this->assertEquals("Corrected Content for Approval", $article->content);
         $this->assertEquals(1, $article->id);
         $this->assertFalse($article->isNewRecord);
 
@@ -705,14 +711,14 @@ class SAModelVersioningTest extends CDbTestCase
         $this->assertEquals("Admin", $comment->getVersionCreatedBy());
         $this->assertEquals("2013-05-28 12:55:23", $comment->getVersionCreatedAt());
 
-        $this->assertEquals("Corrected Content", $article->content);
+        $this->assertEquals("Corrected Content for Approval", $article->content);
         $this->assertEquals(1, $article->id);
         $this->assertFalse($article->isNewRecord);
     }
 
     public function testCompareVersions() {
         $article = Article::model()->findByPk(1);
-        $comment = Article::model()->findByPk(1);
+        $comment = Comment::model()->findByPk(1);
 
         $this->assertFalse($article->compareVersions(1,10));
         $this->assertFalse($comment->compareVersions(10,1));
@@ -733,7 +739,7 @@ class SAModelVersioningTest extends CDbTestCase
 
         $differences = $comment->compareVersions(2,3);
         $expected = array(
-            'content' => array(
+            'comment' => array(
                 2 => "Corrected Content for Approval",
                 3 => "Corrected Content",
             ),
@@ -744,7 +750,7 @@ class SAModelVersioningTest extends CDbTestCase
 
     public function testCompareTo() {
         $article = Article::model()->findByPk(1);
-        $comment = Article::model()->findByPk(1);
+        $comment = Comment::model()->findByPk(1);
 
         $this->assertFalse($article->compareTo(10));
         $this->assertFalse($comment->compareTo(10));
@@ -758,7 +764,7 @@ class SAModelVersioningTest extends CDbTestCase
 
         $differences = $comment->compareTo(2);
         $expected = array(
-            'content' => array(
+            'comment' => array(
                 2 => "Corrected Content for Approval",
                 3 => "Corrected Content",
             ),
