@@ -24,6 +24,10 @@ class SAModelVersioning extends CActiveRecordBehavior
 	protected $_versionComment = "";
 	protected $_lastVersion;
 	protected $_versionTable;
+    /**
+     * @var bool Indicates if version specific properties where populated - used internal for lazy loading
+     */
+    protected $_propertiesPopulated = false;
 
 	public function afterSave($event)
 	{
@@ -70,7 +74,10 @@ class SAModelVersioning extends CActiveRecordBehavior
 
 	public function getVersionCreatedBy()
 	{
-		return $this->_createdBy;
+        if (!$this->_propertiesPopulated) {
+            $this->loadVersionProperties();
+        }
+        return $this->_createdBy;
 	}
 
 	public function setVersionComment($versionComment)
@@ -80,11 +87,17 @@ class SAModelVersioning extends CActiveRecordBehavior
 
 	public function getVersionComment()
 	{
+        if (!$this->_propertiesPopulated) {
+            $this->loadVersionProperties();
+        }
 		return $this->_versionComment;
 	}
 
 	public function getVersionCreatedAt()
 	{
+        if (!$this->_propertiesPopulated) {
+            $this->loadVersionProperties();
+        }
 		if($this->_createdAt !== null) {
 			return $this->_createdAt;
 		} else {
@@ -397,8 +410,32 @@ class SAModelVersioning extends CActiveRecordBehavior
 		$model->versionComment = $values[$this->versionCommentField];
 		$model->versionCreatedBy = $values[$this->createdByField];
 		$model->versionCreatedAt = $values[$this->createdAtField];
+        $model->_propertiesPopulated = true;
 		$model->setAttributes($values, false);
 		return $model;
 	}
+
+    /**
+     * Load version related propertie and populate them.
+     */
+    protected function loadVersionProperties() {
+        $versionArray = Yii::app()->db->createCommand()
+            ->select('*')
+            ->from($this->versionTable)
+            ->where(
+                "id=:id AND $this->versionField=:version",
+                array(
+                    ':id'=>$this->getOwner()->primaryKey,
+                    ':version'=>$this->getOwner()->getVersion(),
+                )
+            )
+            ->queryRow();
+        if($versionArray) {
+            $this->populateActiveRecord($versionArray,$this->getOwner());
+            return true;
+        } else {
+            return false;
+        }
+    }
 	
 }
