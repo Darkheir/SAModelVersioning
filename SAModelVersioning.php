@@ -400,7 +400,12 @@ class SAModelVersioning extends CActiveRecordBehavior
 	*/
 	protected function populateNewRecord($values, $className)
 	{
-		return $this->populateActiveRecord($values, new $className());
+        $model = $this->populateActiveRecord($values, new $className());
+        if ($model->getPrimaryKey()) {
+            $model->setIsNewRecord(false);
+        }
+		return $model;
+
 	}
 	
 	/**
