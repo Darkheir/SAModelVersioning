@@ -275,7 +275,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 			$differences = array();
 			foreach($versionsArray[0] as $index => $value) {
 				if(isset($versionsArray[1][$index]) && $value !== $versionsArray[1][$index]) {
-					$differences[$index] = array($versionsArray[0]['version'] => $value, $versionsArray[1]['version'] => $versionsArray[1][$index]);
+					$differences[$index] = array($versionsArray[0][$this->versionField] => $value, $versionsArray[1][$this->versionField] => $versionsArray[1][$index]);
 				}
 			}
 			$differences = $this->unsetVersionedAttributes($differences);

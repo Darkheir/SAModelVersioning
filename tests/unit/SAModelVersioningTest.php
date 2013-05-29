@@ -765,8 +765,8 @@ class SAModelVersioningTest extends CDbTestCase
         $differences = $comment->compareTo(2);
         $expected = array(
             'comment' => array(
+                'actual' => "Corrected Content",
                 2 => "Corrected Content for Approval",
-                3 => "Corrected Content",
             ),
         );
         $this->assertTrue(is_array($differences));
