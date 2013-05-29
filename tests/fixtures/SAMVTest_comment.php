@@ -5,7 +5,7 @@ return array(
         'iter' => 3,
         'comment' => "Corrected Content",
     ),
-    'article2' => array(
+    'comment2' => array(
         'id' => 2,
         'iter' => 1,
         'comment' => "Test Content",
