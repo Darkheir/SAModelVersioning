@@ -603,16 +603,16 @@ class SAModelVersioningTest extends CDbTestCase
         $this->assertEquals($articleLastVersion->content,$articleLastVersions[2]->content);
         $this->assertEquals($articlePreviousVersion->content,$articlePreviousVersions[0]->content);
 
-        $this->assertEquals($commentLastVersion->content,$commentLastVersions[2]->content);
-        $this->assertEquals($commentPreviousVersion->content,$commentPreviousVersions[0]->content);
+        $this->assertEquals($commentLastVersion->comment,$commentLastVersions[2]->comment);
+        $this->assertEquals($commentPreviousVersion->comment,$commentPreviousVersions[0]->comment);
 
         //Testing specific versioning attributes
         $this->assertEquals(1,$commentPreviousVersions[0]->getVersion());
         $this->assertEquals(2,$commentPreviousVersions[1]->getVersion());
-        $this->assertEquals(1,$articleLastVersion[0]->getVersion());
-        $this->assertEquals(2,$articleLastVersion[1]->getVersion());
-        $this->assertEquals(3,$articleLastVersion[2]->getVersion());
-        $this->assertEquals("User",$articleLastVersion[2]->getVersionCreatedBy());
+        $this->assertEquals(1,$articleLastVersions[0]->getVersion());
+        $this->assertEquals(2,$articleLastVersions[1]->getVersion());
+        $this->assertEquals(3,$articleLastVersions[2]->getVersion());
+        $this->assertEquals("User",$articleLastVersions[2]->getVersionCreatedBy());
     }
 
     public function testGetLastVersions() {
