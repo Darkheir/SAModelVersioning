@@ -284,6 +284,79 @@ class SAModelVersioningTest extends CDbTestCase
         $this->assertNotEmpty($versionEntries,"Comment versions not deleted");
     }
 
+    public function testAfterFind()
+    {
+        $article = Article::model()->findByPk(1);
+        $this->assertEquals($article->getAttributes(),$article->getOldAttributes());
+    }
+
+    public function testGetOldAttributes()
+    {
+        //Not much to test for a simple getter method, so we will test if under all circumstances the oldAttributes are updated.
+        $article = Article::model()->findByPk(1);
+        $this->assertEquals($article->getAttributes(),$article->getOldAttributes());
+
+        $article2 = $article->getOneVersion(2);
+        $this->assertEquals($article2->getAttributes(),$article2->getOldAttributes());
+
+        $article2->content = "Test1234";
+        $this->assertNotEquals($article2->getAttributes(),$article2->getOldAttributes());
+
+        $article2->save();
+        $this->assertEquals($article2->getAttributes(),$article2->getOldAttributes());
+    }
+
+    public function testSetOldAttributes()
+    {
+        $article = new Article();
+        $expectation = array(
+          'content' => "HelloSetOldAttributes",
+        );
+        $article->setOldAttributes($expectation);
+        $this->assertEquals($expectation,$article->getOldAttributes());
+    }
+
+    public function testGetNonVersionedAttributes()
+    {
+        $expectation = array(
+            'default' => array(
+                'approved',
+                'visible',
+            ),
+            'static' => array(
+                'deleted'
+            ),
+        );
+
+        $this->assertEquals($expectation,Article::model()->getNonVersionedAttributes());
+
+        $expectation = array(
+            'default' => array(
+            ),
+            'static' => array(
+            ),
+        );
+
+        $this->assertEquals($expectation,Comment::model()->getNonVersionedAttributes());
+    }
+
+    public function testSetNonVersionedAttributes()
+    {
+        $expectation = array(
+            'default' => array(
+                'approved',
+                'visible',
+            ),
+            'static' => array(
+                'deleted'
+            ),
+        );
+
+        Comment::model()->setNonVersionedAttributes($expectation);
+
+        $this->assertEquals($expectation,Comment::model()->getNonVersionedAttributes());
+    }
+
     public function testGetVersionTable() {
         $articleVersionTable = Article::model()->getVersionTable();
         $this->assertTrue($articleVersionTable === "SAMVTest_article_version","Returning default version table.");
@@ -340,6 +413,15 @@ class SAModelVersioningTest extends CDbTestCase
         $comment = Comment::model()->findByPk($comment_id);
         $this->assertEquals("TestUser",$article->getVersionCreatedBy(),"Getting VersionCreatedBy Attribute");
         $this->assertEquals("TestUser",$comment->getVersionCreatedBy(),"Getting VersionCreatedBy Attribute on custom table");
+
+        //Extra testing: Trying to change and save it again!
+        $comment->comment ="Test2";
+        $comment->setVersionCreatedBy("TestUser2");
+        $this->assertTrue($comment->save(),"Saving comment");
+
+        $comment = Comment::model()->findByPk($comment_id);
+        $this->assertEquals("Test2",$comment->comment);
+        $this->assertEquals("TestUser2",$comment->getVersionCreatedBy(),"Getting VersionCreatedBy Attribute on custom table");
     }
 
     public function testSetVersionComment() {

@@ -42,8 +42,8 @@ class Article extends CActiveRecord
         return array(
             'modelVersioning' => array(
                 'class' => 'ext.SAModelVersioning',
-                /* Not yet implemented, therefore crashing test suite
                 'nonVersionedAttributes' => array(
+                    'default' => array(
                         'approved',
                         'visible',
                     ),
@@ -51,7 +51,6 @@ class Article extends CActiveRecord
                         'deleted'
                     ),
                 ),
-                */
             ),
         );
     }
