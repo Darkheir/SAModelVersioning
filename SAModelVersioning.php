@@ -161,9 +161,13 @@ class SAModelVersioning extends CActiveRecordBehavior
 		);
 		if($updateVersion) {
 			Yii::app()->db->createCommand()->update($this->getOwner()->tableName(), array(
-				$this->versionField => 1,
+				$this->versionField => 0,
 				), 'id=:id', array(':id' => $this->getOwner()->id)
 			);
+            $this->setVersionComment("");
+            $this->setVersionCreatedBy("");
+            $this->setVersionCreatedAt(0);
+            $this->getOwner()->{$this->versionField} = null;
 		}
 	}
 
