@@ -81,7 +81,7 @@ class SAModelVersioning extends CActiveRecordBehavior
             );
             $this->getOwner()->{$this->versionField} = $version;
             $this->_lastVersion = $version;
-        } else {
+        } else if (!empty($this->_nonVersionedAttributes['default'])) {
             //If not we need to update at least the current version with the changes
             $updateFields = array();
             foreach ($this->_nonVersionedAttributes['default'] as $fieldName) {

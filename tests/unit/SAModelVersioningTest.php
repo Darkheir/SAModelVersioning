@@ -854,4 +854,10 @@ class SAModelVersioningTest extends CDbTestCase
         $this->assertTrue(is_array($differences));
         $this->assertEquals($expected,$differences);
     }
+	
+	public function testAfterSaveWithoutVersionedAttributes() {
+        $comment = Comment::model()->findByPk(1);
+		//Expecting it to save without any errors.
+		$this->assertTrue($comment->save());
+	}
 }
