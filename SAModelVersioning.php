@@ -24,17 +24,76 @@ class SAModelVersioning extends CActiveRecordBehavior
 	protected $_versionComment = "";
 	protected $_lastVersion;
 	protected $_versionTable;
+    /**
+     * @var bool Indicates if version specific properties where populated - used internal for lazy loading
+     */
+    protected $_propertiesPopulated = false;
+    /**
+     * @var array A list of attributes which should not be versioned
+     *           There are 2 kind of special attributes:
+     *            * default = if only this attributes changed, no new version will be created
+     *            * static = if a static attribute changed, the change will be done on all versions
+     */
+    protected $_nonVersionedAttributes = array(
+                                            'default' => array(),
+                                            'static' => array()
+                                         );
+    /**
+     * @var array A buffer for "oldAttributes" in order to check which attributes changed and which not
+     */
+    protected $_oldattributes = array();
 
 	public function afterSave($event)
 	{
-		Yii::app()->db->createCommand()->insert($this->versionTable, $this->versionedAttributes);
-		$version = Yii::app()->db->getLastInsertID();
-		Yii::app()->db->createCommand()->update($this->getOwner()->tableName(), array(
-			$this->versionField => $version,
-			), 'id=:id', array(':id' => $this->getOwner()->id)
-		);
-		$this->getOwner()->version = $version;
-		$this->_lastVersion = $version;
+        //First we need to determine if we need to save a new version:
+        $newVersionRequired = false;
+
+        $newattributes = $this->getOwner()->getAttributes();
+        $oldattributes = $this->getOldAttributes();
+
+        foreach ($newattributes as $name => $value) {
+            if (in_array($name, $this->_nonVersionedAttributes['default'])) {
+                //If it is in the default list, we will not create a new version, even if it was changed
+            } else {
+                if (!empty($oldattributes)) {
+                    $old = $oldattributes[$name];
+                } else {
+                    $old = null;
+                }
+                if ($value != $old) {
+                    if (in_array($name, $this->_nonVersionedAttributes['static'])) {
+                        //If a static member changed, we dont need to create a new version, but we need to change all appearances
+                        $this->saveStaticAttribute($name,$value);
+                    } else {
+                        //We have a real change of a value we want to "version"
+                        $newVersionRequired = true;
+                    }
+                }
+            }
+        }
+
+        if ($newVersionRequired) {
+            Yii::app()->db->createCommand()->insert($this->versionTable, $this->versionedAttributes);
+            $version = Yii::app()->db->getLastInsertID();
+            Yii::app()->db->createCommand()->update($this->getOwner()->tableName(), array(
+                $this->versionField => $version,
+                ), 'id=:id', array(':id' => $this->getOwner()->id)
+            );
+            $this->getOwner()->{$this->versionField} = $version;
+            $this->_lastVersion = $version;
+        } else if (!empty($this->_nonVersionedAttributes['default'])) {
+            //If not we need to update at least the current version with the changes
+            $updateFields = array();
+            foreach ($this->_nonVersionedAttributes['default'] as $fieldName) {
+                $updateFields[$fieldName] = $newattributes[$fieldName];
+            }
+            Yii::app()->db->createCommand()->update($this->versionTable, $updateFields
+                , 'id=:id AND '.$this->versionField.'=:version', array(':id' => $this->getOwner()->id, ':version' => $this->getVersion())
+            );
+        }
+
+        //Saved values are the new old values
+        $this->setOldAttributes($this->getOwner()->getAttributes());
 	}
 
 	public function afterDelete($event)
@@ -43,6 +102,32 @@ class SAModelVersioning extends CActiveRecordBehavior
 			$this->deleteVersioning(false);
 		}
 	}
+
+    public function afterFind($event)
+    {
+        // Save old values
+        $this->setOldAttributes($this->getOwner()->getAttributes());
+    }
+
+    public function getOldAttributes()
+    {
+        return $this->_oldattributes;
+    }
+
+    public function setOldAttributes($value)
+    {
+        $this->_oldattributes=$value;
+    }
+
+    public function getPropertiesPopulated()
+    {
+        return $this->_propertiesPopulated;
+    }
+
+    public function setPropertiesPopulated($value)
+    {
+        $this->_propertiesPopulated=(bool)$this->setAttribute($value);
+    }
 
 	/**
 	 * Return the name of the version table for the model
@@ -63,28 +148,75 @@ class SAModelVersioning extends CActiveRecordBehavior
 		$this->_versionTable = $this->setAttribute($table);
 	}
 
-	public function setVersionCreatedBy($createdBy)
-	{
-		$this->_createdBy = $this->setAttribute($createdBy);
-	}
+    public function getNonVersionedAttributes()
+    {
+        return $this->_nonVersionedAttributes;
+    }
 
-	public function getVersionCreatedBy()
+    public function setNonVersionedAttributes($attributes)
+    {
+        if (is_array($attributes)) {
+            $nonVersionedAttributes = array(
+                'default' => array(),
+                'static' => array()
+            );
+            if (isset($attributes['default']) && is_array($attributes['default'])) {
+                foreach ($attributes['default'] as $item) {
+                    if (is_string($item)) {
+                        $nonVersionedAttributes['default'][] = $item;
+                    }
+                }
+            }
+            if (isset($attributes['static']) && is_array($attributes['static'])) {
+                foreach ($attributes['static'] as $item) {
+                    if (is_string($item)) {
+                        $nonVersionedAttributes['static'][] = $item;
+                    }
+                }
+            }
+            $this->_nonVersionedAttributes = $nonVersionedAttributes;
+        }
+        return $this->_nonVersionedAttributes;
+    }
+
+
+    public function setVersionCreatedBy($createdBy)
+    {
+        if (!$this->propertiesPopulated) {
+            $this->loadVersionProperties();
+        }
+        $this->_createdBy = $this->setAttribute($createdBy);
+    }
+
+    public function getVersionCreatedBy()
 	{
-		return $this->_createdBy;
+        if (!$this->propertiesPopulated) {
+            $this->loadVersionProperties();
+        }
+        return $this->_createdBy;
 	}
 
 	public function setVersionComment($versionComment)
 	{
-		$this->_versionComment = $this->setAttribute($versionComment);
+        if (!$this->propertiesPopulated) {
+            $this->loadVersionProperties();
+        }
+        $this->_versionComment = $this->setAttribute($versionComment);
 	}
 
 	public function getVersionComment()
 	{
+        if (!$this->propertiesPopulated) {
+            $this->loadVersionProperties();
+        }
 		return $this->_versionComment;
 	}
 
 	public function getVersionCreatedAt()
 	{
+        if (!$this->propertiesPopulated) {
+            $this->loadVersionProperties();
+        }
 		if($this->_createdAt !== null) {
 			return $this->_createdAt;
 		} else {
@@ -94,6 +226,9 @@ class SAModelVersioning extends CActiveRecordBehavior
 
 	public function setVersionCreatedAt($versionCreatedAt)
 	{
+        if (!$this->propertiesPopulated) {
+            $this->loadVersionProperties();
+        }
 		$this->_createdAt = $versionCreatedAt;
 	}
 
@@ -102,7 +237,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 	*/
 	public function isLastVersion() 
 	{
-		return $this->getOwner()->version === $this->getLastVersionNumber();
+		return $this->getOwner()->{$this->versionField} === $this->getLastVersionNumber();
 	}
 	
 	/**
@@ -110,10 +245,10 @@ class SAModelVersioning extends CActiveRecordBehavior
 	*/
 	public function getVersion() 
 	{
-		if ($this->getOwner()->version == null) {
+		if ($this->getOwner()->{$this->versionField} == null) {
 			return 0;
 		} else {
-			return $this->getOwner()->version;
+			return $this->getOwner()->{$this->versionField};
 		}
 	}
 	
@@ -148,9 +283,13 @@ class SAModelVersioning extends CActiveRecordBehavior
 		);
 		if($updateVersion) {
 			Yii::app()->db->createCommand()->update($this->getOwner()->tableName(), array(
-				$this->versionField => 1,
+				$this->versionField => 0,
 				), 'id=:id', array(':id' => $this->getOwner()->id)
 			);
+            $this->setVersionComment("");
+            $this->setVersionCreatedBy("");
+            $this->setVersionCreatedAt(0);
+            $this->getOwner()->{$this->versionField} = null;
 		}
 	}
 
@@ -164,7 +303,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->select('*')
 			    ->from($this->versionTable)
 			    ->where('id=:id', array(':id'=>$this->getOwner()->primaryKey))
-			    ->order('version ASC')
+			    ->order($this->versionField.' ASC')
 			    ->queryAll();
 	    if(!empty($allVersionsArray)) {
 	    	return $this->populateActiveRecords($allVersionsArray);	
@@ -185,9 +324,9 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->select('*')
 			    ->from($this->versionTable)
 			    ->where('id=:id', array(':id'=>$this->getOwner()->primaryKey))
-			    ->order('version DESC')
+                ->order($this->versionField.' DESC')
 			    ->limit($number)
-			    ->queryAll();
+                ->queryAll();
 	    if(!empty($lastVersionsArray)) {
 	    	return $this->populateActiveRecords($lastVersionsArray);
 	    } else {
@@ -207,7 +346,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->select('*')
 			    ->from($this->versionTable)
 			    ->where(
-			    	"id=:id AND $this->versionField=:version", 
+			    	"id=:id AND $this->versionField=:version",
 			    	array(
 			    		':id'=>$this->getOwner()->primaryKey, 
 			    		':version'=>$versionNumber,
@@ -224,6 +363,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 	
 	/**
 	* Convert the model to the given version
+    * Attention: This action may destroy any dataintegrity of the model as the attributes will be changed to the state of the old version.
 	* @param int $versionNumber The version to convert to
 	* @return bool true if everything went fine, false otherwise
 	*/
@@ -233,7 +373,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->select('*')
 			    ->from($this->versionTable)
 			    ->where(
-			    	"id=:id AND $this->versionField=:version", 
+			    	"id=:id AND $this->versionField=:version",
 			    	array(
 			    		':id'=>$this->getOwner()->primaryKey, 
 			    		':version'=>$versionNumber,
@@ -241,6 +381,18 @@ class SAModelVersioning extends CActiveRecordBehavior
 		    	)
 			    ->queryRow();
 	    if($versionArray) {
+            /**
+             * We need to save the version conversion directly into the database,
+             * if not it is nothing else then getOneVersion.
+             * If we require the user to save the model via $model->save() it will just create a new
+             * version on top. (therefore destroying any sense into a "toVersion" method.
+             */
+            $dbArray = $this->unsetVersionedAttributes($versionArray);
+            unset($dbArray['id']);
+            $dbArray[$this->versionField] = $versionNumber;
+            Yii::app()->db->createCommand()->update($this->getOwner()->tableName(),
+                $dbArray, 'id=:id', array(':id' => $this->getOwner()->id)
+            );
 	    	$this->populateActiveRecord($versionArray, $this->getOwner());
 	    	return true;
 	    } else {
@@ -260,22 +412,22 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->select('*')
 			    ->from($this->versionTable)
 			    ->where(
-					array('and', 'id=:id', array('or', $this->versionField . '=:version1', $this->versionField . '=:version2')),
+					array('and', 'id=:id', array('or', $this->versionField.' =:version1',$this->versionField.' =:version2')),
 					array(
 						':id'=>$this->getOwner()->primaryKey,
 						':version1' => $version1,
 						':version2' => $version2,
 					)
 				)
-			    ->order("$this->versionField ASC")
+			    ->order($this->versionField." ASC")
 			    ->queryAll();
 	    if(!empty($versionsArray)&& count($versionsArray) == 2) {
 			//Watch attributes changing from one version to the other and put them in the array
-			//penser à unset les attributs de version (version, comment, created by, created at)
+			//penser ï¿½ unset les attributs de version (version, comment, created by, created at)
 			$differences = array();
 			foreach($versionsArray[0] as $index => $value) {
 				if(isset($versionsArray[1][$index]) && $value !== $versionsArray[1][$index]) {
-					$differences[$index] = array($versionsArray[0]['version'] => $value, $versionsArray[1]['version'] => $versionsArray[1][$index]);
+					$differences[$index] = array($versionsArray[0][$this->versionField] => $value, $versionsArray[1][$this->versionField] => $versionsArray[1][$index]);
 				}
 			}
 			$differences = $this->unsetVersionedAttributes($differences);
@@ -298,7 +450,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->select('*')
 			    ->from($this->versionTable)
 			    ->where(
-			    	"id=:id AND $this->versionField=:version", 
+			    	"id=:id AND $this->versionField=:version",
 			    	array(
 			    		':id'=>$this->getOwner()->primaryKey, 
 			    		':version'=>$versionNumber,
@@ -333,6 +485,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 		$versionedAttributes[$this->createdByField] = $this->versionCreatedBy;
 		$versionedAttributes[$this->createdAtField] = $this->VersionCreatedAt;
 		$versionedAttributes[$this->versionCommentField] = $this->versionComment;
+
 		//we don't save the actual version number in the version table since it'll be automatically incremented
 		unset($versionedAttributes[$this->versionField]);
 		return $versionedAttributes;
@@ -383,7 +536,13 @@ class SAModelVersioning extends CActiveRecordBehavior
 	*/
 	protected function populateNewRecord($values, $className)
 	{
-		return $this->populateActiveRecord($values, new $className());
+        $model = $this->populateActiveRecord($values, new $className());
+        if ($model->getPrimaryKey()) {
+            $model->setOldAttributes($model->getAttributes());
+            $model->setIsNewRecord(false);
+        }
+		return $model;
+
 	}
 	
 	/**
@@ -398,7 +557,54 @@ class SAModelVersioning extends CActiveRecordBehavior
 		$model->versionCreatedBy = $values[$this->createdByField];
 		$model->versionCreatedAt = $values[$this->createdAtField];
 		$model->setAttributes($values, false);
+        $model->setPropertiesPopulated(true);
 		return $model;
 	}
+
+    /**
+     * Load version related propertie and populate them.
+     */
+    protected function loadVersionProperties() {
+        if (!$this->propertiesPopulated) {
+            $this->propertiesPopulated = true;
+            if ($this->getOwner()->isNewRecord) {
+                return true;
+            }
+            $versionArray = Yii::app()->db->createCommand()
+                ->select('*')
+                ->from($this->versionTable)
+                ->where(
+                    "id=:id AND $this->versionField=:version",
+                    array(
+                        ':id'=>$this->getOwner()->primaryKey,
+                        ':version'=>$this->getOwner()->getVersion(),
+                    )
+                )
+                ->queryRow();
+            if($versionArray) {
+                $model = $this->getOwner();
+                $model->versionComment = $versionArray[$this->versionCommentField];
+                $model->versionCreatedBy = $versionArray[$this->createdByField];
+                $model->versionCreatedAt = $versionArray[$this->createdAtField];
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Saving a static attribute - which means the attribute will be changed in all versions.
+     * @param $name - name of the attribute
+     * @param $value - new value
+     */
+    protected function saveStaticAttribute($name,$value) {
+        Yii::app()->db->createCommand()->update($this->versionTable, array(
+                $name => $value,
+            ), 'id=:id', array(':id' => $this->getOwner()->id)
+        );
+    }
 	
 }

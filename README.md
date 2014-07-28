@@ -122,6 +122,7 @@ As I said above there are few params that you can use to customize the behavior:
 * `versionCommentField` let you change the name of the db field representing the comment for this version. Default to `version_comment`.
 * `versionField` let you change the name of the db field that will store the version number. Default to `version`
 * `removeVersioningOnDelete` let you decide if the versioned entries must be deleted when the original model is deleted. Default to `true`.
+* `nonVersionedAttributes` for excluding specific attributes from generating new versions when they are changed.
 
 Here is an example of the behavior declaration with the params:
 
@@ -248,6 +249,7 @@ $book->deleteVersioning();
 * `$versionCommentField` : (String) Name of the field holding the version comment
 * `$versionField` : (String) Name of the field holding the version number
 * `$removeVersioningOnDelete` : (Boolean) If we need to remove the versioning when the model is deleted
+* `$nonVersioningAttributes` : (Array) If you want to exclude some values from triggering a new version or have some values equal over all the versions
 
 Of course because of yii you can also call :
 
@@ -267,4 +269,6 @@ Feel free to provide some ideas of improvment and if you provide some pull reque
 
 ##Updates
 
+* 28-05-2013 Adding Unit tests
+* 29-05-2013 Adding excluded fields
 
