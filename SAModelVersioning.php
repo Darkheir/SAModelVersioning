@@ -110,7 +110,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 	*/
 	public function getVersion() 
 	{
-		if ($this->getOwner()->version == null) {
+		if ($this->getOwner()->version === null) {
 			return 0;
 		} else {
 			return $this->getOwner()->version;
@@ -271,7 +271,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->queryAll();
 	    if(!empty($versionsArray)&& count($versionsArray) == 2) {
 			//Watch attributes changing from one version to the other and put them in the array
-			//penser à unset les attributs de version (version, comment, created by, created at)
+			//penser Ã  unset les attributs de version (version, comment, created by, created at)
 			$differences = array();
 			foreach($versionsArray[0] as $index => $value) {
 				if(isset($versionsArray[1][$index]) && $value !== $versionsArray[1][$index]) {
@@ -353,7 +353,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 
 	protected function setAttribute($value)
 	{
-		if($value == null) {
+		if($value === null) {
 			return "";
 		} else {
 			return $value;
