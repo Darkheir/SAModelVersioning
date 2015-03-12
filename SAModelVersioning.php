@@ -1,7 +1,6 @@
 <?php
-/**
- * 
- */
+
+
 class SAModelVersioning extends CActiveRecordBehavior
 {
 	
