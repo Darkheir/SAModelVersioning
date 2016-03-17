@@ -264,8 +264,8 @@ Feel free to provide some ideas of improvment and if you provide some pull reque
 
 ## Links
 
-* [The Github page](https://github.com/Darkheir/SAModelVersioning)
+* [The Github page](https://github.com/artemyev/SAModelVersioning/)
 
 ##Updates
-
+Adding support for other names primary key in the model table.
 
