@@ -23,14 +23,17 @@ class SAModelVersioning extends CActiveRecordBehavior
 	protected $_versionComment = "";
 	protected $_lastVersion;
 	protected $_versionTable;
+	protected $_idfieldTable;
 
 	public function afterSave($event)
 	{
 		Yii::app()->db->createCommand()->insert($this->versionTable, $this->versionedAttributes);
 		$version = Yii::app()->db->getLastInsertID();
+		
+		$idfield = $this->idfieldTable;
 		Yii::app()->db->createCommand()->update($this->getOwner()->tableName(), array(
 			$this->versionField => $version,
-			), 'id=:id', array(':id' => $this->getOwner()->id)
+			), $this->idfieldTable.'=:'.$this->idfieldTable, array(':'.$this->idfieldTable => $this->getOwner()->$idfield)
 		);
 		$this->getOwner()->version = $version;
 		$this->_lastVersion = $version;
@@ -60,6 +63,20 @@ class SAModelVersioning extends CActiveRecordBehavior
 	public function setVersionTable($table)
 	{
 		$this->_versionTable = $this->setAttribute($table);
+	}
+
+	public function getIdFieldTable()
+	{
+		if($this->_idfieldTable !== null) {
+			return $this->_idfieldTable;
+		} else {
+			return "id";
+		}
+	}
+
+	public function setIdFieldTable($idfieldTable)
+	{
+		$this->_idfieldTable = $this->setAttribute($idfieldTable);
 	}
 
 	public function setVersionCreatedBy($createdBy)
@@ -127,7 +144,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 			$lastVersion = Yii::app()->db->createCommand()
 			    ->select("MAX($this->versionField) as version_number")
 			    ->from($this->versionTable)
-			    ->where('id=:id', array(':id'=>$this->getOwner()->primaryKey))
+			    ->where($this->idfieldTable.'=:'.$this->idfieldTable, array(':'.$this->idfieldTable=>$this->getOwner()->primaryKey))
 			    ->queryRow();
 			$this->_lastVersion = $lastVersion['version_number'];
 			return $this->_lastVersion;
@@ -141,14 +158,15 @@ class SAModelVersioning extends CActiveRecordBehavior
 	 */
 	public function deleteVersioning($updateVersion = true)
 	{
-		Yii::app()->db->createCommand()->delete($this->versionTable, 'id=:id', array(
-			':id'=>$this->getOwner()->primaryKey
+		Yii::app()->db->createCommand()->delete($this->versionTable, $this->idfieldTable.'=:'.$this->idfieldTable, array(
+			':'.$this->idfieldTable=>$this->getOwner()->primaryKey
 			)
 		);
 		if($updateVersion) {
+			$idfield = $this->idfieldTable;
 			Yii::app()->db->createCommand()->update($this->getOwner()->tableName(), array(
 				$this->versionField => 1,
-				), 'id=:id', array(':id' => $this->getOwner()->id)
+				), $this->idfieldTable.'=:'.$this->idfieldTable, array(':'.$this->idfieldTable => $this->getOwner()->$idfield)
 			);
 		}
 	}
@@ -162,7 +180,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 		$allVersionsArray = Yii::app()->db->createCommand()
 			    ->select('*')
 			    ->from($this->versionTable)
-			    ->where('id=:id', array(':id'=>$this->getOwner()->primaryKey))
+			    ->where($this->idfieldTable.'=:'.$this->idfieldTable, array(':'.$this->idfieldTable=>$this->getOwner()->primaryKey))
 			    ->order('version ASC')
 			    ->queryAll();
 	    if(!empty($allVersionsArray)) {
@@ -183,7 +201,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 		$lastVersionsArray = Yii::app()->db->createCommand()
 			    ->select('*')
 			    ->from($this->versionTable)
-			    ->where('id=:id', array(':id'=>$this->getOwner()->primaryKey))
+			    ->where($this->idfieldTable.'=:'.$this->idfieldTable, array(':'.$this->idfieldTable=>$this->getOwner()->primaryKey))
 			    ->order('version DESC')
 			    ->limit($number)
 			    ->queryAll();
@@ -206,9 +224,9 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->select('*')
 			    ->from($this->versionTable)
 			    ->where(
-			    	"id=:id AND $this->versionField=:version", 
+			    	$this->idfieldTable."=:".$this->idfieldTable." AND $this->versionField=:version", 
 			    	array(
-			    		':id'=>$this->getOwner()->primaryKey, 
+			    		':'.$this->idfieldTable=>$this->getOwner()->primaryKey, 
 			    		':version'=>$versionNumber,
 			    		)
 		    	)
@@ -232,9 +250,9 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->select('*')
 			    ->from($this->versionTable)
 			    ->where(
-			    	"id=:id AND $this->versionField=:version", 
+			    	$this->idfieldTable."=:".$this->idfieldTable." AND $this->versionField=:version", 
 			    	array(
-			    		':id'=>$this->getOwner()->primaryKey, 
+			    		':'.$this->idfieldTable=>$this->getOwner()->primaryKey, 
 			    		':version'=>$versionNumber,
 			    		)
 		    	)
@@ -259,9 +277,9 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->select('*')
 			    ->from($this->versionTable)
 			    ->where(
-					array('and', 'id=:id', array('or', $this->versionField . '=:version1', $this->versionField . '=:version2')),
+					array('and', $this->idfieldTable.'=:'.$this->idfieldTable, array('or', $this->versionField . '=:version1', $this->versionField . '=:version2')),
 					array(
-						':id'=>$this->getOwner()->primaryKey,
+						':'.$this->idfieldTable=>$this->getOwner()->primaryKey,
 						':version1' => $version1,
 						':version2' => $version2,
 					)
@@ -270,7 +288,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->queryAll();
 	    if(!empty($versionsArray)&& count($versionsArray) == 2) {
 			//Watch attributes changing from one version to the other and put them in the array
-			//penser à unset les attributs de version (version, comment, created by, created at)
+			//penser a unset les attributs de version (version, comment, created by, created at)
 			$differences = array();
 			foreach($versionsArray[0] as $index => $value) {
 				if(isset($versionsArray[1][$index]) && $value !== $versionsArray[1][$index]) {
@@ -297,9 +315,9 @@ class SAModelVersioning extends CActiveRecordBehavior
 			    ->select('*')
 			    ->from($this->versionTable)
 			    ->where(
-			    	"id=:id AND $this->versionField=:version", 
+			    	$this->idfieldTable."=:".$this->idfieldTable." AND $this->versionField=:version", 
 			    	array(
-			    		':id'=>$this->getOwner()->primaryKey, 
+			    		':'.$this->idfieldTable=>$this->getOwner()->primaryKey, 
 			    		':version'=>$versionNumber,
 			    		)
 		    	)
@@ -326,7 +344,7 @@ class SAModelVersioning extends CActiveRecordBehavior
 	*/
 	protected function getVersionedAttributes()
 	{
-		$this->VersionCreatedAt = date('Y-m-d H:i:s', time());
+		$this->VersionCreatedAt = date('Y-m-d H:i:s', time()); // or time();
 
 		$versionedAttributes = $this->getOwner()->getAttributes(false);
 		$versionedAttributes[$this->createdByField] = $this->versionCreatedBy;
