@@ -1,4 +1,4 @@
-SAModelVersioning with support custom name primary key
+SAModelVersioning
 ===========
 
 SAModelVersioning is a Yii behavior that provides versioning capabilities to any ActiveRecord object.
