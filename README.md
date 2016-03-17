@@ -1,4 +1,4 @@
-SAModelVersioning
+SAModelVersioning with support custom name primary key
 ===========
 
 SAModelVersioning is a Yii behavior that provides versioning capabilities to any ActiveRecord object.
@@ -34,7 +34,6 @@ echo $book->version; // 3
 * Yii 1.1 or above
 * PHP 5.3
 * a Mysql database
-* A primary key named `id` in the model table (may change in the next version if some people need the ability to customize it)
 
 ##Installation
 
@@ -117,6 +116,7 @@ public function behaviors(){
 As I said above there are few params that you can use to customize the behavior:
 
 * `versionTable` let you choose the name of the version table. Default to `{model_table_name}_version`.
+* `IdFieldTable` let you choose the name primary key of the model table. Default to `id`.
 * `createdByField` let you change the name of the db field representing who created this version. Default to `created_by`.
 * `createdAtField` let you change the name of the db field representing at what time this version was created. Default to `created_time`.
 * `versionCommentField` let you change the name of the db field representing the comment for this version. Default to `version_comment`.
@@ -129,6 +129,7 @@ Here is an example of the behavior declaration with the params:
 'modelVersioning' => array(
   'class' => 'application.extensions.SAModelVersioning',
   'versionTable' => 'version_table_for_this_model', //default to `{primary_table}_version`
+  'IdFieldTable' => 'primary_key_name', //default to `id`
   'versionField' => 'yourNewField', //default to `version`
   'createdByField' => 'yourNewField', //default to `created_by`
   'createdAtField' => 'yourNewField', //default to `created_time`
